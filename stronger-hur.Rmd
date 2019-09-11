@@ -1,0 +1,43 @@
+---
+title: "Stronger Hurricanes"
+output: html_document
+---
+
+Using satellite derived wind speed estimates over the period 1981-2006 [Elsner et al. (2008)](http://myweb.fsu.edu/jelsner/PDF/Research/ElsnerKossinJagger2008.pdf) show that the strongest hurricanes getting stronger. They relate this increase to rising ocean temperatures consistent with [theory](https://www.nature.com/articles/nature03906).
+
+Since the oceans have continued to warm we would expect those upward trends to continue. In particular, for hurricanes occurring over the North Atlantic they find that 15% of all named storms had wind speeds exceeding 48.9 m/s (Table 1) and an upward trend of this quantile wind speed of .63 m/s/yr.
+
+Now considering all North Atlantic names storms over the period 2007-2019 we note that 20% of them had wind speeds exceeding 48.9 m/s (see Table).
+```{r}
+Year <- c(2007, 2007, 2008, 2008, 2008, 2008, 2008, 2009, 2009, 2010, 2010, 2010, 2010, 2010,
+          2011, 2011, 2011, 2011, 2012, 2012, 2014, 2014, 2015, 2015, 2016, 2016, 2016, 2016,
+          2017, 2017, 2017, 2017, 2017, 2017, 2018, 2018, 2019)
+Name <- c("Dean", "Felix", "Bertha", "Gustav", "Ike", "Omar", "Paloma", "Bill", "Fred",
+          "Danielle", "Earl", "Igor", "Julia", "Karl", "Irene", "Katia", "Ophelia", "Rina",
+          "Michael", "Sandy", "Edouard", "Gonzalo", "Danny", "Joaquin", "Gaston", "Matthew",
+          "Nicole", "Otto", "Harvey", "Irma", "Jose", "Lee", "Maria", "Ophelia", "Florence",
+          "Michael", "Dorian")
+MPH <- c(175, 175, 125, 150, 145, 130, 140, 130, 120, 130, 145, 155, 140, 125, 120, 140, 140,
+         115, 115, 115, 120, 145, 125, 155, 120, 165, 140, 115, 130, 180, 155, 115, 175, 115, 
+         150, 160, 185)
+LMI.df <- data.frame(Year, Name, MPH)
+
+NS <- c(15, 16, 9, 19, 19, 19, 14, 8, 11, 15, 17, 15, 7)
+MH <- c(2, 5, 2, 5, 4, 2, 0, 2, 2, 4, 6, 2, 1)
+Year <- 2007:2019
+
+Counts.df <- data.frame(Year, NS, MH)
+sum(MH)/sum(NS) * 100
+```
+
+
+```{r}
+library(dplyr)
+```
+
+
+
+
+
+Year | Name            | Highest Wind Speed (mph) | Highest Wind Speed (m/s)
+_____|_________________|__________________________|_________________________
