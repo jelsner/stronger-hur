@@ -6,9 +6,9 @@ output: html_document
 bibliography: References.bib
 ---
 
-Science validates through predictions. Using satellite derived wind speed estimates from tropical cyclones @ElsnerKossinJagger2008 showed that the strongest hurricanes got stronger in the period 1981-2006. In particular, they found that 15% (85th quantile) of all named storms across the North Atlantic had wind speeds exceeding 48.9 m/s (Table 1) with an upward trend of .63 m/s/yr in this quantile wind speed. They related this increase to a corresponding rise in ocean temperatures consistent with theory [@Emanuel2005]. Since the oceans have continued to warm since that paper was published we would predict that the upward trend in the intensity of the strongest hurricanes to continue. 
+Science validates through predictions. Using satellite derived wind speed estimates from tropical cyclones @ElsnerKossinJagger2008 showed that the strongest hurricanes got stronger in the period 1981-2006. In particular, they found that 15% (85th quantile) of all named storms across the North Atlantic had wind speeds exceeding 48.9 m/s (Table 1) with an upward trend of .63 m/s/yr in this quantile wind speed. They related this increase to a corresponding rise in ocean temperatures consistent with theory [@Emanuel2005]. The oceans have continued to warm since that paper was published so we would predict that the upward trend in the intensity of the strongest hurricanes has continued. 
 
-Considering all North Atlantic named storms (tropical storms and hurricanes) over the 13-year period 2007--2019 [data taken from Wikipedia] we note that 20% of them had wind speeds exceeding 48.9 m/s. An increase of 5 percentage points.
+To check this, consider all North Atlantic named storms (tropical storms and hurricanes) over the 13-year period 2007--2019 [data taken from Wikipedia] we note that 20% of them had wind speeds exceeding 48.9 m/s. An increase of 5 percentage points.
 ```{r}
 Year <- c(2007, 2007, 2008, 2008, 2008, 2008, 2008, 2009, 2009, 2010, 2010, 2010, 2010, 2010,
           2011, 2011, 2011, 2011, 2012, 2012, 2014, 2014, 2015, 2015, 2016, 2016, 2016, 2016,
