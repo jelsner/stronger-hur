@@ -187,7 +187,7 @@ summary {
 </div>
 
 
-<p>Science gets validated through predictions. Using satellite derived wind speed estimates from tropical cyclones <span class="citation">Elsner, Kossin, and Jagger (2008)</span> showed that the strongest hurricanes were getting stronger in the period 1981-2006. In particular, they found that 15% (85th quantile) of all named storms across the North Atlantic had wind speeds exceeding 48.9 m/s (Table 1) with an upward trend of .63 m/s/yr in this quantile wind speed. They related this increase to a corresponding rise in ocean temperatures consistent with theory <span class="citation">(K. A. Emanuel 1988)</span>. The oceans have continued to warm since that paper was published so we would predict that the upward trend in the intensity of the strongest hurricanes has continued.</p>
+<p>Science gets validated through predictions. Using satellite derived wind speed estimates from tropical cyclones <span class="citation">Elsner, Kossin, and Jagger (2008)</span> showed that the strongest hurricanes were getting stronger through the period 1981-2006. In particular, they found that 15% (85th quantile) of all named storms across the North Atlantic had wind speeds exceeding 48.9 m/s (Table 1 in <span class="citation">Elsner, Kossin, and Jagger (2008)</span> ) with an upward trend of .63 m/s/yr in this quantile wind speed. They related this increase to a corresponding rise in ocean temperatures consistent with theory <span class="citation">(K. A. Emanuel 1988)</span>. The oceans have continued to warm since that paper was published so we would predict that the upward trend in the intensity of the strongest hurricanes has continued.</p>
 <p>To check this, consider all North Atlantic named storms (tropical storms and hurricanes) over the 13-year period 2007–2019 [data taken from Wikipedia]. <code>NS</code> and <code>MH</code> are the annual number of named storms and major hurricanes respectively.</p>
 <pre class="r"><code>Year &lt;- c(2007, 2007, 2008, 2008, 2008, 2008, 2008, 2009, 2009, 2010, 2010, 2010, 2010, 2010,
           2011, 2011, 2011, 2011, 2012, 2012, 2014, 2014, 2015, 2015, 2016, 2016, 2016, 2016,
@@ -203,12 +203,12 @@ MPH &lt;- c(175, 175, 125, 150, 145, 130, 140, 130, 120, 130, 145, 155, 140, 125
 LMI.df &lt;- data.frame(Year, Name, MPH, MPS = MPH * .44704)
 
 NS &lt;- c(15, 16, 9, 19, 19, 19, 14, 8, 11, 15, 17, 15, 18)
-MH &lt;- c(2, 5, 2, 5, 4, 2, 0, 2, 2, 4, 6, 2, 8)
+MH &lt;- c(2, 5, 2, 5, 4, 2, 0, 2, 2, 4, 6, 2, 3)
 Year &lt;- 2007:2019
 
 Counts.df &lt;- data.frame(Year, NS, MH)
 # sum(MH)/sum(NS) * 100</code></pre>
-<p>We note that 23% of them had wind speeds exceeding 48.9 m/s. An increase of 8 percentage points.</p>
+<p>We note that 20% of them had wind speeds exceeding 48.9 m/s. An increase of 5 percentage points over the earlier period examined in <span class="citation">Elsner, Kossin, and Jagger (2008)</span>.</p>
 <pre class="r"><code>suppressPackageStartupMessages(library(dplyr))
 LMI.df %&gt;%
   arrange(desc(MPS))</code></pre>
@@ -276,10 +276,10 @@ percentile.df &lt;- as.data.frame(percentile)
 percentile.df$MPS &lt;- as.numeric(rownames(percentile.df))
 
 p85ws &lt;- round(approx(x = percentile.df$percentile, y = percentile.df$MPS, xout = .85)$y, 1)</code></pre>
-<p>Further we note that the 85th quantile wind speed has increased from 48.9 m/s to 56.3 m/s which is an increase of 7.4 m/s and which matches (within the margin of error) an extrapolation by taking the trend of .63 m/s/yr from Table 1 of Elsner et al. (2008) and multipling it by 7 (mid point number of years in a 13-year period). [48.9 + .63 * 7 = 53.3 m/s].</p>
+<p>Further we note that the 85th quantile wind speed has increased from 48.9 m/s to 53.5 m/s which is an increase of 4.6 m/s and which matches an extrapolation that takes the trend of .63 m/s/yr from Table 1 in <span class="citation">Elsner, Kossin, and Jagger (2008)</span> and multiplies it by 7 (mid point number of years in a 13-year period). [48.9 + .63 * 7 = 53.3 m/s].</p>
 <pre class="r"><code>p95 &lt;- round(approx(x = percentile.df$MPS, y = percentile.df$percentile, xout = 60.3)$y, 1)
 p95ws &lt;- round(approx(x = percentile.df$percentile, y = percentile.df$MPS, xout = .95)$y, 1)</code></pre>
-<p>Furthermore we note that 5% of the storms exceeded 60.3 m/s over the earlier period (Table 1, 95th quantile) but has increased to 10% over the later period. The 95th quantile wind speed has increased from 60.3 m/s to 74.1 m/s, which is somewhat stronger than the extrapolated trend [60.3 + .81 * 7 = 66 m/s].</p>
+<p>Furthermore we note that 5% of the storms exceeded 60.3 m/s over the earlier period (Table 1, 95th quantile) but has increased to 10% over the later period. The 95th quantile wind speed has increased from 60.3 m/s to 68 m/s, which is somewhat stronger than the extrapolated trend [60.3 + .81 * 7 = 66 m/s].</p>
 <p>It is hard to argue against this straightforward post publication analysis and the results raise the question of why <span class="citation">Elsner, Kossin, and Jagger (2008)</span> was largely ignored or discounted when writing “state-of-the-knowledge” reports on hurricanes and climate change (e.g., <span class="citation">Knutson et al. (2019)</span>).</p>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>
