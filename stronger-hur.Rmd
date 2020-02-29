@@ -82,4 +82,13 @@ Furthermore we note that 5% of the storms exceeded 60.3 m/s over the earlier per
 
 It is hard to argue against this straightforward post publication analysis and the results raise the question of why @ElsnerKossinJagger2008 was largely ignored or discounted when writing "state-of-the-knowledge" reports on hurricanes and climate change (e.g., @KnutsonEtAl2019).
 
+### Repeat for Western Pacific typhoons
+
+Get data from IBTraCs http://ibtracs.unca.edu/index.php?name=browse-year-basin
+
+
+
+
+
+
 ## References
