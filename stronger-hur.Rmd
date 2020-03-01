@@ -86,8 +86,22 @@ It is hard to argue against this straightforward post publication analysis and t
 
 Get data from IBTraCs http://ibtracs.unca.edu/index.php?name=browse-year-basin
 
+```{r}
+Year <- c(2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007,
+          2008, 2008, 2008, 2008, 2008, 2008, 2008, 2008,
+          2009, 2009, 2009, 2009, 2009, 2009, 2009,
+          2010, 2010, 2010, 2010) 
+Name <- c("Kong-Rey", "Yutu", "Man-Yi", "Usagi", "Sepat", "Nari", "Wipha", "Krosa", "Kijiki", 
+          "Neoguri", "Rammansun", "Nakri", "Fengshen", "Nuri", "Sinlaku", "Hagupit", "Jangmi",
+          "Kujira", "Vamco", "Choi-Wan", "Parma", "Melor", "Lupit", "Nida",
+          "Kompasu", "Fanapi", "Megi", "Chaba")
 
-
+KNT <- c(100, 130, 125, 120, 140, 125, 135, 130, 115,
+         100, 135, 125, 110, 100, 125, 125, 140,
+         115, 120, 140, 135, 150, 140, 155,
+         105, 105, 160, 115)
+          
+```
 
 
 
