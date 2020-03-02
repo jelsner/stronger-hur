@@ -82,4 +82,30 @@ Furthermore we note that 5% of the storms exceeded 60.3 m/s over the earlier per
 
 It is hard to argue against this straightforward post publication analysis and the results raise the question of why @ElsnerKossinJagger2008 was largely ignored or discounted when writing "state-of-the-knowledge" reports on hurricanes and climate change (e.g., @KnutsonEtAl2019).
 
+### Repeat for Western Pacific typhoons
+
+Get data from IBTraCs http://ibtracs.unca.edu/index.php?name=browse-year-basin
+
+```{r}
+Year <- c(2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007,
+          2008, 2008, 2008, 2008, 2008, 2008, 2008, 2008,
+          2009, 2009, 2009, 2009, 2009, 2009, 2009,
+          2010, 2010, 2010, 2010,
+          2011, 2011, 2011, 2011, 2011, 2011, 2011) 
+Name <- c("Kong-Rey", "Yutu", "Man-Yi", "Usagi", "Sepat", "Nari", "Wipha", "Krosa", "Kijiki", 
+          "Neoguri", "Rammansun", "Nakri", "Fengshen", "Nuri", "Sinlaku", "Hagupit", "Jangmi",
+          "Kujira", "Vamco", "Choi-Wan", "Parma", "Melor", "Lupit", "Nida",
+          "Kompasu", "Fanapi", "Megi", "Chaba",
+          "Songda", "Ma-on", "Muifa", "Nanmadol", "Roke", "Nesat", "Nalgae")
+
+KNT <- c(100, 130, 125, 120, 140, 125, 135, 130, 115,
+         100, 135, 125, 110, 100, 125, 125, 140,
+         115, 120, 140, 135, 150, 140, 155,
+         105, 105, 160, 115,
+         140, 115, 140, 140, 115, 115, 130)
+          
+```
+
+
+
 ## References
