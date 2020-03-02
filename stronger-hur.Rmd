@@ -68,7 +68,7 @@ percentile <- (cumsum(table(LMI.df$MPS)) + (sum(NS) - sum(MH)))/sum(NS)
 percentile.df <- as.data.frame(percentile)
 percentile.df$MPS <- as.numeric(rownames(percentile.df))
 
-p85ws <- round(approx(x = percentile.df$percentile, y = percentile.df$MPS, xout = .85)$y, 1)
+( p85ws <- round(approx(x = percentile.df$percentile, y = percentile.df$MPS, xout = .85)$y, 1) )
 ```
 
 Further we note that the 85th quantile wind speed has increased from 48.9 m/s to `r p85ws` m/s which is an increase of `r p85ws - 48.9` m/s and which matches an extrapolation that takes the trend of .63 m/s/yr from Table 1 in @ElsnerKossinJagger2008 and multiplies it by 7 (mid point number of years in a 13-year period). [48.9 + .63 * 7 = 53.3 m/s].
