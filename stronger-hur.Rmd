@@ -339,19 +339,6 @@ LMI.df2 %>%
             q95 = quantile(MPS, probs = .95))
 ```
 
-Get annual counts.
-```{r}
-AnnualCounts <- PerStormMax.df %>%
-  group_by(Year) %>%
-  summarize(NS = sum(KTS >= 34),
-            NH = sum(KTS >= 64),
-            MH = sum(KTS >= 96))
-
-ggplot(AnnualCounts, aes(x = Year, y = MH)) +
-  geom_point() +
-  geom_smooth(method = lm)
-```
-
 Repeat for Eastern Pacific
 ```{r}
 TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.EP.list.v04r00.csv",
@@ -391,17 +378,70 @@ LMI.df2 %>%
             q95 = quantile(MPS, probs = .95))
 ```
 
-Get annual counts.
+Repeat for Southern Indian
 ```{r}
-AnnualCounts <- PerStormMax.df %>%
-  group_by(Year) %>%
-  summarize(NS = sum(KTS >= 34),
-            NH = sum(KTS >= 64),
-            MH = sum(KTS >= 96))
+TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.SI.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
 
-ggplot(AnnualCounts, aes(x = Year, y = MH)) +
-  geom_point() +
-  geom_smooth(method = lm)
+TCs.df2 <- TCs.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- TCs.df2 %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df2 <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+LMI.df2 %>%
+  group_by(EarlLate) %>%
+  summarize(q5 = quantile(MPS, probs = .5),
+            q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95))
+```
+
+Slope graph: from https://acaird.github.io/computers/r/2013/11/27/slopegraphs-ggplot
+```{r}
+library(scales)
+months <- 24
+years1 <- c(59.2, 66.9, 69.5)
+years2 <- c(61.2, 66.9, 72.0)
+group <- c("75th Percentile", "90th Percentile", "95th Percentile")
+a <- data.frame(years1, years2, group)
+l11<-paste(a$group, a$years1, sep="\n")
+l12<-paste(a$group, a$years2, sep="\n")
+pSI <- ggplot(a) + 
+  geom_segment(aes(x = 0, xend = months, y = years1, yend = years2), size=.75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("Percentile Wind Speed (m/s)") +
+  xlim((0-12), (months+12)) +
+  ylim(55, 75) +
+  geom_text(label = l12, y = a$years2, x=rep.int(months,length(a)),hjust=-0.2,size=3) +
+  geom_text(label = l11, y = a$years1, x=rep.int( 0,length(a)),hjust=1.2,size=3) +
+  geom_text(label = "1981-2006", x = 0, y = 75, hjust= 1.2,size=4) +
+  geom_text(label = "2007-2019", x = months, y = 75, hjust=-0.1,size=4)
+pSI
 ```
 
 ## References
