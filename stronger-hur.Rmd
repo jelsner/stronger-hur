@@ -440,7 +440,8 @@ pSI <- ggplot(a) +
   geom_text(label = l12, y = a$years2, x=rep.int(months,length(a)),hjust=-0.2,size=3) +
   geom_text(label = l11, y = a$years1, x=rep.int( 0,length(a)),hjust=1.2,size=3) +
   geom_text(label = "1981-2006", x = 0, y = 75, hjust= 1.2,size=4) +
-  geom_text(label = "2007-2019", x = months, y = 75, hjust=-0.1,size=4)
+  geom_text(label = "2007-2019", x = months, y = 75, hjust=-0.1,size=4) +
+  ggtitle("Southern Indian Ocean")
 pSI
 ```
 
