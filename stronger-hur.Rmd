@@ -91,7 +91,7 @@ It is hard to argue against this straightforward post publication analysis and t
 ( pws <- round(approx(x = percentile.df$percentile, y = percentile.df$MPS, xout = c(.85, .9, .95, .975, .99))$y, 1) )
 Q <- c(.85, .9, .95, .975, .99)
 OldWindQ <- c(48.9, 54.8, 60.3, 72.7, 77.8)  # From Elsner et al. 2008
-Trend <- c(.63,  .73,  .81,  1.11,  1.52)
+Trend <- c 
 SE <- c(.228, .226, .449, .356, .356)
 
 CompareATL.df <- data.frame(Quantile = Q,
@@ -101,6 +101,27 @@ CompareATL.df <- data.frame(Quantile = Q,
                             ExtrapWindQ = OldWindQ + Trend * 7,
                             QHi = OldWindQ + (Trend + SE) * 7,
                             QLo = OldWindQ + (Trend - SE) * 7)
+```
+
+Read IBTraCS version 4
+```{r}
+#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
+#                   header = TRUE)
+
+TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+library(dplyr)
+library(lubridate)
+
+TCs.df2 <- TCs.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME)) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WMO_WIND, USA_WIND)
 ```
 
 ### Repeat for Western Pacific typhoons
