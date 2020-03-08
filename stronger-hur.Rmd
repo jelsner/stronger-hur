@@ -103,31 +103,9 @@ CompareATL.df <- data.frame(Quantile = Q,
                             QLo = OldWindQ + (Trend - SE) * 7)
 ```
 
-Read IBTraCS version 4
-```{r}
-#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
-#                   header = TRUE)
-
-TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
-                   header = TRUE,
-                   stringsAsFactors = FALSE,
-                   na.strings = " ")
-
-library(dplyr)
-library(lubridate)
-
-TCs.df2 <- TCs.df %>%
-  filter(SEASON != "Year") %>%
-  mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
-  mutate(Time = as.Date(ISO_TIME)) %>%
-  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WMO_WIND, USA_WIND)
-```
-
 ### Repeat for Western Pacific typhoons
 
 Get data from IBTrACS http://ibtracs.unca.edu/index.php?name=browse-year-basin
-
 ```{r}
 Year <- c(2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007,
           2008, 2008, 2008, 2008, 2008, 2008, 2008, 2008,
@@ -217,7 +195,6 @@ Compare with:
 58.9 63.7 69.6 73.1 77.6 *Table 1: Elsner et al. 2008
 .12  .14  .09  .29  .36
 
-
 ### Repeat for Eastern Pacific hurricanes
 ```{r}
 Year <- c(2007,
@@ -231,6 +208,8 @@ Year <- c(2007,
           2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015,
           2016, 2016, 2016, 2016, 2016, 2016,
           2017, 2017, 2017, 2017,
+          2018, 2018, 2018, 2018, 2018, 2018, 2018, 2018, 2018, 2018,
+          2019, 2019, 2019, 2019)
   
 Name <- c("Flossie",
           "Hernan", "Norbert",
@@ -243,6 +222,8 @@ Name <- c("Flossie",
           "Andres", "Blanca", "Dolores", "Hilda", "Kilo", "Ignacio", "Jimena", "Linda", "Olaf", "Patricia", "Sandra",
           "Blas", "Darby", "Georgette", "Lester", "Madeline", "Seymour",
           "Eugene", "Fernanda", "Kenneth", "Otis",
+          "Aletta", "Bud", "Hector", "Lane", "Norman", "Olivia", "Rosa", "Walaka", "Sergio", "Willa",
+          "Barbara", "Erick", "Juliette", "Kiko")
           
 KNT <- c(120,
          105, 115,
@@ -255,10 +236,172 @@ KNT <- c(120,
          125, 125, 115, 125, 120, 125, 135, 110, 130, 185, 130,
          120, 105, 115, 125, 115, 130,
          100, 125, 115, 100,
-         
-         
+         120, 120, 135, 140, 130, 115, 130, 140, 120, 140,
+         135, 115, 110, 115)
 ```
 
 
+Read IBTraCS version 4 Start with North Atlantic.
+```{r}
+#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
+#                   header = TRUE)
+
+TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+library(lubridate)
+
+TCs.df2 <- TCs.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for hurricanes. First get per storm maximum.
+```{r}
+PerStormMax.df <- TCs.df2 %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df2 <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+LMI.df2 %>%
+  group_by(EarlLate) %>%
+  summarize(q5 = quantile(MPS, probs = .5),
+            q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95))
+```
+
+Get annual counts as a data frame.
+```{r}
+AnnualCounts <- PerStormMax.df %>%
+  group_by(Year) %>%
+  summarize(NS = sum(KTS >= 34),
+            NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96))
+
+library(ggplot2)
+
+ggplot(AnnualCounts, aes(x = Year, y = NH)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+Repeat for Western Pacific
+```{r}
+TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.WP.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+TCs.df2 <- TCs.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- TCs.df2 %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df2 <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+LMI.df2 %>%
+  group_by(EarlLate) %>%
+  summarize(q5 = quantile(MPS, probs = .5),
+            q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95))
+```
+
+Get annual counts.
+```{r}
+AnnualCounts <- PerStormMax.df %>%
+  group_by(Year) %>%
+  summarize(NS = sum(KTS >= 34),
+            NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96))
+
+ggplot(AnnualCounts, aes(x = Year, y = MH)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+Repeat for Eastern Pacific
+```{r}
+TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.EP.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+TCs.df2 <- TCs.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- TCs.df2 %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df2 <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+LMI.df2 %>%
+  group_by(EarlLate) %>%
+  summarize(q5 = quantile(MPS, probs = .5),
+            q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95))
+```
+
+Get annual counts.
+```{r}
+AnnualCounts <- PerStormMax.df %>%
+  group_by(Year) %>%
+  summarize(NS = sum(KTS >= 34),
+            NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96))
+
+ggplot(AnnualCounts, aes(x = Year, y = MH)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
 
 ## References
