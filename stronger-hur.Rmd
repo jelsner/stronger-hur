@@ -26,9 +26,6 @@ library(ggplot2)
 
 Import the IBTrACS version 4 data: 
 ```{r}
-#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
-#                   header = TRUE)
-
 NA.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
                   header = TRUE,
                   stringsAsFactors = FALSE,
@@ -88,8 +85,8 @@ pNA <- ggplot(df) +
   ylim(55, 85) +
   geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
   geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
-  geom_text(label = paste0("Years \n1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
-  geom_text(label = paste0("Years \n2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
 ( pNA <- pNA + ggtitle("North Atlantic") )
 #  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
@@ -122,10 +119,7 @@ WP.df <- WP.df %>%
          WindKt = as.numeric(USA_WIND),
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
 
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
 PerStormMax.df <- WP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -142,11 +136,9 @@ LMI.df <- PerStormMax.df %>%
   group_by(EarlLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95)) )
-```
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
 
-Plot a slope graph.
-```{r}
 months <- 24
 Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
 Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
@@ -164,21 +156,13 @@ pWP <- ggplot(df) +
   theme(panel.border=element_blank()) +
   xlab("") + ylab("") +
   xlim((0-12), (months + 12)) +
-  ylim(55, 82) +
+  ylim(55, 85) +
   geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
   geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
-  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
-  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
 ( pWP <- pWP + ggtitle("Western North Pacific") )
-#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
-```
-
-Plot together using {patchwork}.
-```{r}
-library(patchwork)
-
-pNA + pWP
 ```
 
 ### Repeat for hurricanes in the Eastern North Pacific
@@ -196,10 +180,7 @@ EP.df <- EP.df %>%
          WindKt = as.numeric(USA_WIND),
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
 
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
 PerStormMax.df <- EP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -216,11 +197,9 @@ LMI.df <- PerStormMax.df %>%
   group_by(EarlLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95)) )
-```
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
 
-Plot a slope graph.
-```{r}
 months <- 24
 Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
 Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
@@ -238,14 +217,13 @@ pEP <- ggplot(df) +
   theme(panel.border=element_blank()) +
   xlab("") + ylab("") +
   xlim((0-12), (months + 12)) +
-  ylim(55, 82) +
+  ylim(55, 85) +
   geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
   geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
-  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
-  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
 ( pEP <- pEP + ggtitle("Eastern North Pacific") )
-#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
 ```
 
 ### Repeat for Southern Indian
@@ -263,10 +241,7 @@ SI.df <- SI.df %>%
          WindKt = as.numeric(USA_WIND),
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
 
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
 PerStormMax.df <- SI.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -283,11 +258,9 @@ LMI.df <- PerStormMax.df %>%
   group_by(EarlLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95)) )
-```
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
 
-Plot a slope graph.
-```{r}
 months <- 24
 Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
 Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
@@ -305,19 +278,144 @@ pSI <- ggplot(df) +
   theme(panel.border=element_blank()) +
   xlab("") + ylab("") +
   xlim((0-12), (months + 12)) +
-  ylim(55, 82) +
+  ylim(55, 85) +
   geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
   geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
-  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
-  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
 ( pSI <- pSI + ggtitle("Southern Indian") )
-#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
 ```
 
+### Repeat for South Pacific
 ```{r}
-(pWP + pEP)/(pSI + pNA)
+SP.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.SP.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+SP.df <- SP.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+
+PerStormMax.df <- SP.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
+
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pSP <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 85) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
+
+( pSP <- pSP + ggtitle("South Pacific") )
 ```
+
+### Repeat for Northern Indian
+```{r}
+NI.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NI.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+NI.df <- NI.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+
+PerStormMax.df <- NI.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
+
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pNI <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 85) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
+
+( pNI <- pNI + ggtitle("Northern Indian") )
+```
+
+Plot together using {patchwork}.
+```{r}
+library(patchwork)
+
+(pWP + pEP + pSI)/(pNA + pSP + pNI)
+```
+
 
 ### Old stuff
 
