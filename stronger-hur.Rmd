@@ -1,5 +1,5 @@
 ---
-title: The Increasing Intensity of Strong Atlantic Hurricanes
+title: The Increasing Intensity of Strong Tropical Cyclones
 subtitle: Validating Elsner et al. (2008)
 author: James B. Elsner
 date: "`r format(Sys.time(), '%d %B %Y')`"
@@ -14,6 +14,312 @@ https://www.nature.com/articles/s41467-019-08471-z
 https://journals.ametsoc.org/doi/full/10.1175/JCLI-D-17-0898.1?journalCode=clim
 
 Science gets validated through predictions. Using satellite derived wind speed estimates from tropical cyclones @ElsnerKossinJagger2008 showed that the strongest hurricanes were getting stronger through the period 1981-2006. In particular, they found that 15% (85th quantile) of all named storms across the North Atlantic had wind speeds exceeding 48.9 m/s (Table 1 in @ElsnerKossinJagger2008 ) with an upward trend of .63 m/s/yr in this quantile wind speed. They related this increase to a corresponding rise in ocean temperatures consistent with theory [@Emanuel1988]. The oceans have continued to warm since that paper was published so we would predict that the upward trend in the intensity of the strongest hurricanes has continued. 
+
+Load the functions.
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+### Start with hurricanes in the North Atlantic
+
+Import the IBTrACS version 4 data: 
+```{r}
+#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
+#                   header = TRUE)
+
+NA.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
+                  header = TRUE,
+                  stringsAsFactors = FALSE,
+                  na.strings = " ")
+
+NA.df <- NA.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for tropical cyclones with winds at least 33 m/s. First get per storm fastest wind speed.
+```{r}
+PerStormMax.df <- NA.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95),
+            nH = n()) )
+```
+
+Plot a slope graph. Original code from https://acaird.github.io/computers/r/2013/11/27/slopegraphs-ggplot Data Source: IBTrACS v4 (Knapp et al. 2018)
+```{r}
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pNA <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 85) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = paste0("Years \n1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
+  geom_text(label = paste0("Years \n2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
+
+( pNA <- pNA + ggtitle("North Atlantic") )
+#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
+```
+
+Plot annual counts.
+```{r}
+PerStormMax.df %>%
+  group_by(Year) %>%
+  summarize(NS = sum(KTS >= 34),
+            NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96)) %>%
+ggplot(aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+```
+
+### Repeat for typhoons in the Western North Pacific
+```{r}
+WP.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.WP.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+WP.df <- WP.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- WP.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95)) )
+```
+
+Plot a slope graph.
+```{r}
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pWP <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 82) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
+  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+
+( pWP <- pWP + ggtitle("Western North Pacific") )
+#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
+```
+
+Plot together using {patchwork}.
+```{r}
+library(patchwork)
+
+pNA + pWP
+```
+
+### Repeat for hurricanes in the Eastern North Pacific
+```{r}
+EP.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.EP.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+EP.df <- EP.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- EP.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95)) )
+```
+
+Plot a slope graph.
+```{r}
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pEP <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 82) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
+  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+
+( pEP <- pEP + ggtitle("Eastern North Pacific") )
+#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
+```
+
+### Repeat for Southern Indian
+```{r}
+SI.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.SI.list.v04r00.csv",
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   na.strings = " ")
+
+SI.df <- SI.df %>%
+  filter(SEASON != "Year") %>%
+  mutate(Season = as.integer(SEASON)) %>%
+  filter(Season >= 1981) %>%
+  mutate(Time = as.Date(ISO_TIME),
+         WindKt = as.numeric(USA_WIND),
+         WindMS = WindKt * .5144447) %>%
+  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
+```
+
+Get wind speed quantiles for typhoons. First get per storm maximum.
+```{r}
+PerStormMax.df <- SI.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+( Change.df <- LMI.df %>%
+  group_by(EarlLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95)) )
+```
+
+Plot a slope graph.
+```{r}
+months <- 24
+Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
+Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
+Group <- c("75th", "90th", "95th")
+df <- data.frame(Early, Late, group)
+
+l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+pSI <- ggplot(df) + 
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid=element_blank()) +
+  theme(axis.ticks=element_blank()) +
+  theme(axis.text=element_blank()) +
+  theme(panel.border=element_blank()) +
+  xlab("") + ylab("") +
+  xlim((0-12), (months + 12)) +
+  ylim(55, 82) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
+  geom_text(label = "Years \n1981-2006", x = 0, y = 82, hjust = 1.2, size = 4) +
+  geom_text(label = "Years\n2007-2019", x = months, y = 82, hjust = 0, size = 4) 
+
+( pSI <- pSI + ggtitle("Southern Indian") )
+#  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
+```
+
+```{r}
+(pWP + pEP)/(pSI + pNA)
+```
+
+### Old stuff
 
 To check this, consider all North Atlantic named storms (tropical storms and hurricanes) over the 13-year period 2007--2019 [data taken from Wikipedia]. `NS` and `MH` are the annual number of named storms and major hurricanes respectively.
 ```{r}
@@ -52,8 +358,7 @@ Plot as an ordered bar plot.
 LMI.df <- LMI.df %>%
   mutate(NAME = paste(Year, Name))
 
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(forcats))
+#library(forcats)
 
 ggplot(data = LMI.df) +
   geom_segment(aes(x = reorder(NAME, MPS), y = 50,
@@ -103,7 +408,7 @@ CompareATL.df <- data.frame(Quantile = Q,
                             QLo = OldWindQ + (Trend - SE) * 7)
 ```
 
-### Repeat for Western Pacific typhoons
+#### Repeat for Western Pacific typhoons
 
 Get data from IBTrACS http://ibtracs.unca.edu/index.php?name=browse-year-basin
 ```{r}
@@ -195,7 +500,7 @@ Compare with:
 58.9 63.7 69.6 73.1 77.6 *Table 1: Elsner et al. 2008
 .12  .14  .09  .29  .36
 
-### Repeat for Eastern Pacific hurricanes
+#### Repeat for Eastern Pacific hurricanes
 ```{r}
 Year <- c(2007,
           2008, 2008,
@@ -240,210 +545,4 @@ KNT <- c(120,
          135, 115, 110, 115)
 ```
 
-
-Read IBTraCS version 4 Start with North Atlantic.
-```{r}
-#TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.since1980.list.v04r00.csv",
-#                   header = TRUE)
-
-TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
-                   header = TRUE,
-                   stringsAsFactors = FALSE,
-                   na.strings = " ")
-
-library(lubridate)
-
-TCs.df2 <- TCs.df %>%
-  filter(SEASON != "Year") %>%
-  mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
-  mutate(Time = as.Date(ISO_TIME),
-         WindKt = as.numeric(USA_WIND),
-         WindMS = WindKt * .5144447) %>%
-  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
-
-Get wind speed quantiles for hurricanes. First get per storm maximum.
-```{r}
-PerStormMax.df <- TCs.df2 %>%
-  group_by(SID) %>%
-  summarize(Year = first(Season),
-            Name = first(NAME),
-            KTS = max(WindKt, na.rm = TRUE),
-            MPS = KTS * .5144447,
-            MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
-
-LMI.df2 <- PerStormMax.df %>%
-  filter(KTS >= 64)
-
-LMI.df2 %>%
-  group_by(EarlLate) %>%
-  summarize(q5 = quantile(MPS, probs = .5),
-            q75 = quantile(MPS, probs = .75),
-            q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95))
-```
-
-Get annual counts as a data frame.
-```{r}
-AnnualCounts <- PerStormMax.df %>%
-  group_by(Year) %>%
-  summarize(NS = sum(KTS >= 34),
-            NH = sum(KTS >= 64),
-            MH = sum(KTS >= 96))
-
-library(ggplot2)
-
-ggplot(AnnualCounts, aes(x = Year, y = NH)) +
-  geom_point() +
-  geom_smooth(method = lm)
-```
-
-Repeat for Western Pacific
-```{r}
-TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.WP.list.v04r00.csv",
-                   header = TRUE,
-                   stringsAsFactors = FALSE,
-                   na.strings = " ")
-
-TCs.df2 <- TCs.df %>%
-  filter(SEASON != "Year") %>%
-  mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
-  mutate(Time = as.Date(ISO_TIME),
-         WindKt = as.numeric(USA_WIND),
-         WindMS = WindKt * .5144447) %>%
-  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
-
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
-PerStormMax.df <- TCs.df2 %>%
-  group_by(SID) %>%
-  summarize(Year = first(Season),
-            Name = first(NAME),
-            KTS = max(WindKt, na.rm = TRUE),
-            MPS = KTS * .5144447,
-            MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
-
-LMI.df2 <- PerStormMax.df %>%
-  filter(KTS >= 64)
-
-LMI.df2 %>%
-  group_by(EarlLate) %>%
-  summarize(q5 = quantile(MPS, probs = .5),
-            q75 = quantile(MPS, probs = .75),
-            q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95))
-```
-
-Repeat for Eastern Pacific
-```{r}
-TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.EP.list.v04r00.csv",
-                   header = TRUE,
-                   stringsAsFactors = FALSE,
-                   na.strings = " ")
-
-TCs.df2 <- TCs.df %>%
-  filter(SEASON != "Year") %>%
-  mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
-  mutate(Time = as.Date(ISO_TIME),
-         WindKt = as.numeric(USA_WIND),
-         WindMS = WindKt * .5144447) %>%
-  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
-
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
-PerStormMax.df <- TCs.df2 %>%
-  group_by(SID) %>%
-  summarize(Year = first(Season),
-            Name = first(NAME),
-            KTS = max(WindKt, na.rm = TRUE),
-            MPS = KTS * .5144447,
-            MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
-
-LMI.df2 <- PerStormMax.df %>%
-  filter(KTS >= 64)
-
-LMI.df2 %>%
-  group_by(EarlLate) %>%
-  summarize(q5 = quantile(MPS, probs = .5),
-            q75 = quantile(MPS, probs = .75),
-            q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95))
-```
-
-Repeat for Southern Indian
-```{r}
-TCs.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.SI.list.v04r00.csv",
-                   header = TRUE,
-                   stringsAsFactors = FALSE,
-                   na.strings = " ")
-
-TCs.df2 <- TCs.df %>%
-  filter(SEASON != "Year") %>%
-  mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
-  mutate(Time = as.Date(ISO_TIME),
-         WindKt = as.numeric(USA_WIND),
-         WindMS = WindKt * .5144447) %>%
-  select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
-```
-
-Get wind speed quantiles for typhoons. First get per storm maximum.
-```{r}
-PerStormMax.df <- TCs.df2 %>%
-  group_by(SID) %>%
-  summarize(Year = first(Season),
-            Name = first(NAME),
-            KTS = max(WindKt, na.rm = TRUE),
-            MPS = KTS * .5144447,
-            MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
-
-LMI.df2 <- PerStormMax.df %>%
-  filter(KTS >= 64)
-
-LMI.df2 %>%
-  group_by(EarlLate) %>%
-  summarize(q5 = quantile(MPS, probs = .5),
-            q75 = quantile(MPS, probs = .75),
-            q90 = quantile(MPS, probs = .9),
-            q95 = quantile(MPS, probs = .95),
-            nH = n())
-```
-
-Slope graph: from https://acaird.github.io/computers/r/2013/11/27/slopegraphs-ggplot
-```{r}
-library(scales)
-months <- 24
-years1 <- c(59.2, 66.9, 69.5)
-years2 <- c(61.2, 66.9, 72.0)
-group <- c("75th Percentile", "90th Percentile", "95th Percentile")
-a <- data.frame(years1, years2, group)
-l11<-paste(a$group, paste(a$years1, "m/s", sep = " "), sep = "\n")
-l12<-paste(a$group, paste(a$years2, "m/s", sep = " "), sep = "\n")
-pSI <- ggplot(a) + 
-  geom_segment(aes(x = 0, xend = months, y = years1, yend = years2), size=.75) +
-  theme(panel.background = element_blank()) +
-  theme(panel.grid=element_blank()) +
-  theme(axis.ticks=element_blank()) +
-  theme(axis.text=element_blank()) +
-  theme(panel.border=element_blank()) +
-  xlab("") + ylab("") +
-  xlim((0-12), (months+12)) +
-  ylim(55, 75) +
-  geom_text(label = l12, y = a$years2, x=rep.int(months, length(a)), hjust = -0.2, size=3) +
-  geom_text(label = l11, y = a$years1, x=rep.int(0, length(a)), hjust = 1.2, size=3) +
-  geom_text(label = "1981-2006", x = 0, y = 75, hjust= 1.2,size=4) +
-  geom_text(label = "2007-2019", x = months, y = 75, hjust=-0.1,size=4) +
-  ggtitle("Southern Indian Ocean")
-pSI
-```
-
-## References
+### References
