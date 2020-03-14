@@ -64,7 +64,18 @@ LMI.df <- PerStormMax.df %>%
             nH = n()) )
 
 Change.df %>%
-  pivot_
+  select(-nH) %>%
+  pivot_longer(cols = c(q75, q90, q95)) %>%
+  pivot_wider(values_from = value,
+              names_from = EarlyLate) %>%
+  group_by(name) %>%
+  mutate(pChange = (`TRUE` - `FALSE`)/`TRUE` * 100)
+
+
+
+Change.df %>%
+  pivot_wider(values_from = c(q75, q90, q95, nH),
+              names_from = EarlyLate)
   
 ```
 
