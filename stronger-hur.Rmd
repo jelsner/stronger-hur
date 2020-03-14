@@ -18,6 +18,7 @@ Science gets validated through predictions. Using satellite derived wind speed e
 Load the functions.
 ```{r}
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(ggplot2)
 ```
@@ -50,17 +51,21 @@ PerStormMax.df <- NA.df %>%
             KTS = max(WindKt, na.rm = TRUE),
             MPS = KTS * .5144447,
             MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
+            EarlyLate = Year > 2006) 
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
 ( Change.df <- LMI.df %>%
-  group_by(EarlLate) %>%
+  group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
             q95 = quantile(MPS, probs = .95),
             nH = n()) )
+
+Change.df %>%
+  pivot_
+  
 ```
 
 Plot a slope graph. Original code from https://acaird.github.io/computers/r/2013/11/27/slopegraphs-ggplot Data Source: IBTrACS v4 (Knapp et al. 2018)
