@@ -82,12 +82,13 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
 l11 <- paste(df$Early, "m/s", sep = " ")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
 l12 <- paste(df$Late, "m/s", sep = " ")
 pNA <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = c("black", "gray70", "gray30")), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -96,12 +97,12 @@ pNA <- ggplot(df) +
   xlab("") + ylab("") +
   xlim((0-12), (months + 12)) +
   ylim(55, 85) +
-  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = 0, size = 3) +
+  geom_text(label = l12, y = df$Late, x = rep.int(months, ncol(df)), hjust = -.2, size = 3) +
   geom_text(label = l11, y = df$Early, x = rep.int(0, ncol(df)), hjust = 1.2, size = 3) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pNA <- pNA + ggtitle("North Atlantic") )
+( pNA <- pNA + ggtitle("North Atlantic Hurricanes") )
 #  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
 ```
 
