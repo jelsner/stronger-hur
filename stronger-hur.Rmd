@@ -83,9 +83,11 @@ Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
 l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
 l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$Late, "m/s", sep = " ")
 pNA <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = c("black", "gray70", "gray30")), size = .75) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -344,6 +346,8 @@ SP.df <- SP.df %>%
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
+write.csv(SP.df, file = "SP.csv")
+
 PerStormMax.df <- SP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -351,26 +355,35 @@ PerStormMax.df <- SP.df %>%
             KTS = max(WindKt, na.rm = TRUE),
             MPS = KTS * .5144447,
             MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
+            EarlyLate = Year > 2006) 
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
-( Change.df <- LMI.df %>%
-  group_by(EarlLate) %>%
+Change.df <- LMI.df %>%
+  group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
             q95 = quantile(MPS, probs = .95),
-            nH = n()) )
+            nH = n())
+
+Change.df %>%
+  select(-nH) %>%
+  pivot_longer(cols = c(q75, q90, q95)) %>%
+  pivot_wider(values_from = value,
+              names_from = EarlyLate) %>%
+  group_by(name) %>%
+  mutate(pChange = (`TRUE` - `FALSE`)/`TRUE` * 100)
+
 
 months <- 24
 Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
 Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
-df <- data.frame(Early, Late, group)
+df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
 pSP <- ggplot(df) + 
   geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
   theme(panel.background = element_blank()) +
@@ -405,6 +418,8 @@ NI.df <- NI.df %>%
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
+write.csv(NI.df, file = "NI.csv")
+
 PerStormMax.df <- NI.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -412,26 +427,35 @@ PerStormMax.df <- NI.df %>%
             KTS = max(WindKt, na.rm = TRUE),
             MPS = KTS * .5144447,
             MPH = KTS * 1.15078,
-            EarlLate = Year > 2006) 
+            EarlyLate = Year > 2006) 
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
-( Change.df <- LMI.df %>%
-  group_by(EarlLate) %>%
+Change.df <- LMI.df %>%
+  group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
             q90 = quantile(MPS, probs = .9),
             q95 = quantile(MPS, probs = .95),
-            nH = n()) )
+            nH = n())
+
+Change.df %>%
+  select(-nH) %>%
+  pivot_longer(cols = c(q75, q90, q95)) %>%
+  pivot_wider(values_from = value,
+              names_from = EarlyLate) %>%
+  group_by(name) %>%
+  mutate(pChange = (`TRUE` - `FALSE`)/`TRUE` * 100)
+
 
 months <- 24
 Early <- round(as.vector(unlist(Change.df[1, 2:4], use.names = FALSE)), 1)
 Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
-df <- data.frame(Early, Late, group)
+df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
 pNI <- ggplot(df) + 
   geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
   theme(panel.background = element_blank()) +
@@ -454,7 +478,7 @@ Plot together using {patchwork}.
 ```{r}
 library(patchwork)
 
-(pWP + pEP + pSI)/(pNA + pSP + pNI)
+(pWP + pEP)/(pSI + pNA)/(pSP + pNI)
 ```
 
 
