@@ -106,16 +106,22 @@ pNA <- ggplot(df) +
 #  ggtitle("Percentile Wind Speeds", subtitle = "North Atlantic Ocean hurricanes [Data Source: IBTrACS v4 (Knapp et al. 2018)]")
 ```
 
-Plot annual counts.
+Plot annual counts and test for significant difference in the number of hurricanes.
 ```{r}
-PerStormMax.df %>%
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
   group_by(Year) %>%
-  summarize(NS = sum(KTS >= 34),
-            NH = sum(KTS >= 64),
-            MH = sum(KTS >= 96)) %>%
-ggplot(aes(x = Year, y = NH)) +
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
   geom_point() + geom_line() +
   geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df,
+            exact = FALSE)
 ```
 
 ### Repeat for typhoons in the Western North Pacific
@@ -135,7 +141,9 @@ WP.df <- WP.df %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
 write.csv(WP.df, file = "WP.csv")
+```
 
+```{r}
 PerStormMax.df <- WP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -169,10 +177,14 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
+l12 <- paste(df$Late, "m/s", sep = " ")
+
 pWP <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -186,7 +198,25 @@ pWP <- ggplot(df) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pWP <- pWP + ggtitle("Western North Pacific") )
+( pWP <- pWP + ggtitle("Western North Pacific Typhoons") )
+```
+
+Plot annual counts and test for significant difference in the number of hurricanes.
+```{r}
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
 ```
 
 ### Repeat for hurricanes in the Eastern North Pacific
@@ -206,7 +236,9 @@ EP.df <- EP.df %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
 write.csv(EP.df, file = "EP.csv")
+```
 
+```{r}
 PerStormMax.df <- EP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -240,10 +272,13 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
+l12 <- paste(df$Late, "m/s", sep = " ")
 pEP <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -257,7 +292,25 @@ pEP <- ggplot(df) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pEP <- pEP + ggtitle("Eastern North Pacific") )
+( pEP <- pEP + ggtitle("Eastern North Pacific Hurricanes") )
+```
+
+Plot annual counts and test for significant difference in the number of hurricanes.
+```{r}
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
 ```
 
 ### Repeat for Southern Indian
@@ -270,14 +323,16 @@ SI.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-trac
 SI.df <- SI.df %>%
   filter(SEASON != "Year") %>%
   mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
+  filter(Season >= 1981 & Season < 2020) %>%
   mutate(Time = as.Date(ISO_TIME),
          WindKt = as.numeric(USA_WIND),
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
 write.csv(SI.df, file = "SI.csv")
+```
 
+```{r}
 PerStormMax.df <- SI.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -311,10 +366,13 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
+l12 <- paste(df$Late, "m/s", sep = " ")
 pSI <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -328,7 +386,25 @@ pSI <- ggplot(df) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pSI <- pSI + ggtitle("Southern Indian") )
+( pSI <- pSI + ggtitle("Southern Indian Cyclones") )
+```
+
+Plot annual counts and test for significant difference in the number of hurricanes.
+```{r}
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
 ```
 
 ### Repeat for South Pacific
@@ -341,14 +417,16 @@ SP.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-trac
 SP.df <- SP.df %>%
   filter(SEASON != "Year") %>%
   mutate(Season = as.integer(SEASON)) %>%
-  filter(Season >= 1981) %>%
+  filter(Season >= 1981 & Season < 2020) %>%
   mutate(Time = as.Date(ISO_TIME),
          WindKt = as.numeric(USA_WIND),
          WindMS = WindKt * .5144447) %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
 write.csv(SP.df, file = "SP.csv")
+```
 
+```{r}
 PerStormMax.df <- SP.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -383,10 +461,13 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
+l12 <- paste(df$Late, "m/s", sep = " ")
 pSP <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -400,7 +481,25 @@ pSP <- ggplot(df) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pSP <- pSP + ggtitle("South Pacific") )
+( pSP <- pSP + ggtitle("South Pacific Cyclones") )
+```
+
+Plot annual counts and test for significant difference in the number of hurricanes.
+```{r}
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
 ```
 
 ### Repeat for Northern Indian
@@ -420,7 +519,9 @@ NI.df <- NI.df %>%
   select(SID, Season, NUMBER, BASIN, NAME, ISO_TIME, Time, WindKt, WindMS)
 
 write.csv(NI.df, file = "NI.csv")
+```
 
+```{r}
 PerStormMax.df <- NI.df %>%
   group_by(SID) %>%
   summarize(Year = first(Season),
@@ -455,10 +556,13 @@ Late <- round(as.vector(unlist(Change.df[2, 2:4], use.names = FALSE)), 1)
 Group <- c("75th", "90th", "95th")
 df <- data.frame(Early, Late, Group)
 
-l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
-l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+#l11 <- paste(df$Group, paste(df$Early, "m/s", sep = " "), sep = "\n")
+#l12 <- paste(df$Group, paste(df$Late, "m/s", sep = " "), sep = "\n")
+l11 <- paste(df$Early, "m/s", sep = " ")
+l12 <- paste(df$Late, "m/s", sep = " ")
 pNI <- ggplot(df) + 
-  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late), size = .75) +
+  geom_segment(aes(x = 0, xend = months, y = Early, yend = Late, color = Group), size = .75, show.legend = FALSE) +
+  scale_color_manual(values=c("gray50", "gray30", "black")) +
   theme(panel.background = element_blank()) +
   theme(panel.grid=element_blank()) +
   theme(axis.ticks=element_blank()) +
@@ -472,7 +576,25 @@ pNI <- ggplot(df) +
   geom_text(label = paste0("1981-2006\n(n = ", Change.df[1, 5], ")"), x = 0, y = 85, hjust = 1.2, size = 4) +
   geom_text(label = paste0("2007-2019\n(n = ", Change.df[2, 5], ")"), x = months, y = 85, hjust = 0, size = 4) 
 
-( pNI <- pNI + ggtitle("Northern Indian") )
+( pNI <- pNI + ggtitle("Northern Indian Cyclones") )
+```
+
+Plot annual counts and test for significant difference in the number of hurricanes.
+```{r}
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
 ```
 
 Plot together using {patchwork}.
@@ -480,6 +602,54 @@ Plot together using {patchwork}.
 library(patchwork)
 
 (pWP + pEP)/(pSI + pNA)/(pSP + pNI)
+```
+
+All six basins (globally)
+```{r}
+AllSix.df <- rbind(WP.df, EP.df, SI.df, NA.df, SP.df, NI.df)
+  
+PerStormMax.df <- AllSix.df %>%
+  group_by(SID) %>%
+  summarize(Year = first(Season),
+            Name = first(NAME),
+            KTS = max(WindKt, na.rm = TRUE),
+            MPS = KTS * .5144447,
+            MPH = KTS * 1.15078,
+            EarlyLate = Year > 2006) 
+
+LMI.df <- PerStormMax.df %>%
+  filter(KTS >= 64)
+
+Change.df <- LMI.df %>%
+  group_by(EarlyLate) %>%
+  summarize(q75 = quantile(MPS, probs = .75),
+            q90 = quantile(MPS, probs = .9),
+            q95 = quantile(MPS, probs = .95),
+            nH = n())
+
+Change.df %>%
+  select(-nH) %>%
+  pivot_longer(cols = c(q75, q90, q95)) %>%
+  pivot_wider(values_from = value,
+              names_from = EarlyLate) %>%
+  group_by(name) %>%
+  mutate(pChange = (`TRUE` - `FALSE`)/`TRUE` * 100)
+
+AnnualCount.df <- PerStormMax.df %>%
+  filter(KTS > 64) %>%
+  group_by(Year) %>%
+  summarize(NH = sum(KTS >= 64),
+            MH = sum(KTS >= 96),
+            EarlyLate = first(EarlyLate))
+
+ggplot(data = AnnualCount.df, aes(x = Year, y = NH)) +
+  geom_point() + geom_line() +
+  geom_smooth(method = lm)
+
+wilcox.test(NH ~ EarlyLate, 
+            data = AnnualCount.df, 
+            exact = FALSE)
+```
 ```
 
 
