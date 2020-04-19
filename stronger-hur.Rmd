@@ -21,6 +21,7 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 library(ggplot2)
+library(quantreg)
 ```
 
 ### Start with hurricanes in the North Atlantic
@@ -58,6 +59,10 @@ PerStormMax.df <- NA.df %>%
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
+
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
@@ -72,6 +77,7 @@ Change.df %>%
               names_from = EarlyLate) %>%
   group_by(name) %>%
   mutate(pChange = (`TRUE` - `FALSE`)/`TRUE` * 100)
+
 ```
 
 Plot a slope graph. Original code from https://acaird.github.io/computers/r/2013/11/27/slopegraphs-ggplot Data Source: IBTrACS v4 (Knapp et al. 2018)
@@ -155,6 +161,10 @@ PerStormMax.df <- WP.df %>%
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
+
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
 
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
@@ -253,6 +263,11 @@ PerStormMax.df <- EP.df %>%
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
+
+
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
@@ -347,6 +362,10 @@ PerStormMax.df <- SI.df %>%
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
+
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
@@ -440,6 +459,10 @@ PerStormMax.df <- SP.df %>%
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
+
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
 
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
@@ -536,6 +559,10 @@ PerStormMax.df <- NI.df %>%
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
 
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .9, data = LMI.df))$coefficients
+
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
   summarize(q75 = quantile(MPS, probs = .75),
@@ -621,6 +648,24 @@ PerStormMax.df <- AllSix.df %>%
 
 LMI.df <- PerStormMax.df %>%
   filter(KTS >= 64)
+
+summary(rq(MPS ~ Year, tau = .5, data = LMI.df[!LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .5, data = LMI.df[LMI.df$EarlyLate,]))$coefficients
+summary(rq(MPS ~ Year, tau = .5, data = LMI.df))$coefficients
+
+summary(rq(MPS ~ Year, tau = .5, data = LMI.df[LMI.df$Year >= 2007,]))$coefficients
+summary(rq(MPS ~ Year, tau = .5, data = LMI.df[LMI.df$Year >= 1999,]))$coefficients
+
+quantile(LMI.df$MPS[LMI.df$Year < 1999], probs = .9)
+quantile(LMI.df$MPS[LMI.df$Year >= 1999 & LMI.df$Year <= 2017], probs = .9)
+
+quantile(LMI.df$MPS[LMI.df$Year >= 2007 & LMI.df$Year <= 2013], probs = .5)
+quantile(LMI.df$MPS[LMI.df$Year >= 2013], probs = .5)
+
+quantile(LMI.df$MPS[LMI.df$Year >= 2007 & LMI.df$Year <= 2013], probs = .9)
+quantile(LMI.df$MPS[LMI.df$Year >= 2013], probs = .9)
+
+
 
 Change.df <- LMI.df %>%
   group_by(EarlyLate) %>%
