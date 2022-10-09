@@ -25,7 +25,7 @@ library(ggplot2)
 
 ### Start with hurricanes in the North Atlantic
 
-Import the IBTrACS version 4 data: 
+Import the IBTrACS version 4 data: csv
 ```{r}
 NA.df <- read.csv(file = "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.NA.list.v04r00.csv",
                   header = TRUE,
@@ -43,6 +43,8 @@ NA.df <- NA.df %>%
 
 write.csv(NA.df, file = "NA.csv")
 ```
+
+Shape files are available here https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/shapefile/
 
 Get wind speed quantiles for tropical cyclones with winds at least 33 m/s. First get per storm fastest wind speed.
 ```{r}
