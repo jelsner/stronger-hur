@@ -1,0 +1,83 @@
+---
+title: Synthetic tropical cyclones
+author: James B. Elsner
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+bibliography: References.bib
+editor_options: 
+  chunk_output_type: console
+---
+
+https://data.4tu.nl/articles/dataset/STORM_IBTrACS_present_climate_synthetic_tropical_cyclone_tracks/12706085/2?file=24876980
+
+Read in the first 1000 years (index = 0) from the (comma delimited) txt file.
+```{r}
+All.df <- readr::read_csv("STORM_DATA_IBTRACS_NA_1000_YEARS_0.txt")
+colnames(All.df) <- c("Year", "Month", "TCn", "Time", "Basin",
+                      "Lat", "Lon", "minP_hPa", "Wmax_ms", "Rmax_km",
+                      "Cat", "Land", "Dist_to_land_km")
+All.df <- All.df |>
+  dplyr::mutate(ID = paste0(Year, "-", "TCn"))
+
+AnnualCount.df <- All.df |>
+  dplyr::group_by(Year, TCn) |>
+  dplyr::summarize(nObs = dplyr::n()) |>
+  dplyr::group_by(Year) |>
+  dplyr::summarize(nStorms = dplyr::n())
+
+sum(AnnualCount.df$nStorms)
+```
+
+Create a simple feature data frame.
+```{r}
+All.sf <- All.df |>
+  dplyr::mutate(Lon = ifelse(Lon > 180, -360 + Lon, Lon)) |>
+  sf::st_as_sf(coords = c("Lon", "Lat"),
+               crs = 4326)
+```
+
+Create a line string from the points for each storm.
+```{r}
+StormsP.sf <- All.sf |>
+  dplyr::group_by(Year, TCn) |>
+  dplyr::summarize(nObs = dplyr::n(),
+                   do_union = FALSE) 
+
+StormsL.sf <- StormsP.sf |>
+  sf::st_cast(to = "LINESTRING")
+
+tmap::tmap_mode("view")
+tmap::tm_shape(StormsP.sf$geometry[2]) +
+  tmap::tm_dots(size = .01) +
+  tmap::tm_shape(StormsL.sf$geometry[2]) +
+  tmap::tm_lines()
+
+X <- All.sf |>
+  dplyr::filter(Year == 0, TCn == 1)
+
+tmap::tm_shape(StormsL.sf$geometry[2]) +
+  tmap::tm_lines() +
+tmap::tm_shape(X) +
+  tmap::tm_dots(col = "Wmax_ms", size = .05)
+
+
+```
+
+Get Florida boundaries.
+```{r}
+Leon.sf <- USAboundaries::us_counties(state = "FL",
+                                      resolution = "hi") |>
+  dplyr::select(name) |>
+  dplyr::filter(name == "Leon")
+```
+
+Get all storms that intersected Leon County in Florida.
+```{r}
+Leon_Storms.sf <- StormsL.sf |>
+  sf::st_intersection(y = Leon.sf)
+
+tmap::tm_shape(Leon.sf) +
+  tmap::tm_borders() +
+  tmap::tm_shape(Leon_Storms.sf) +
+  tmap::tm_lines()
+```
