@@ -1,5 +1,5 @@
 ---
-title: Synthetic tropical cyclones
+title: Synthetic & observed tropical cyclones
 author: James B. Elsner
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: html_document
@@ -81,3 +81,24 @@ tmap::tm_shape(Leon.sf) +
   tmap::tm_shape(Leon_Storms.sf) +
   tmap::tm_lines()
 ```
+
+Observed storms from IBTrACs. Shapefiles are available here https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/shapefile/
+
+IBTrACS.NA.list.v04r00.lines.zip
+
+```{r}
+Obs.sf <- sf::st_read(dsn = "IBTrACS.NA.list.v04r00.lines", 
+                      layer = "IBTrACS.NA.list.v04r00.lines")
+```
+
+```{r}
+Leon_Obs.sf <- Obs.sf |>
+  sf::st_intersection(y = Leon.sf)
+
+tmap::tm_shape(Leon.sf) +
+  tmap::tm_borders() +
+  tmap::tm_shape(Leon_Obs.sf) +
+  tmap::tm_lines()
+```
+
+37 storms tracked through
